@@ -12,10 +12,10 @@
             <p>
                 Hello, {{ user.username }} |
                 <a href="{% url 'edit_profile' %}">Edit profile</a> |
-                <a href="/accounts/logout/">Logout</a>
+                <a href="{% url 'logout' %}">Logout</a>
             </p>
         {% else %}
-            <a href="/accounts/login/">Login</a>
+            <a href="{% url 'login' %}">Login</a>
         {% endif %}
     </div>
 

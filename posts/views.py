@@ -1,37 +1,48 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.models import User
+from django.urls import reverse_lazy
+from django.views.generic import ListView, DetailView, UpdateView
+
 from .models import Post, Tag
 from .forms import UserUpdateForm
 
 
-def post_list(request):
-    tag_id = request.GET.get('tag')
-    posts = Post.objects.filter(is_published=True).order_by('-created_at')
-    tags = Tag.objects.all()
+class PostListView(ListView):
+    model = Post
+    template_name = 'posts/post_list.html'
+    context_object_name = 'posts'
 
-    if tag_id:
-        posts = posts.filter(tags__id=tag_id)
+    def get_queryset(self):
+        queryset = Post.objects.filter(is_published=True).order_by('-created_at')
+        tag_id = self.request.GET.get('tag')
 
-    return render(request, 'posts/post_list.html', {
-        'posts': posts,
-        'tags': tags,
-        'selected_tag': tag_id,
-    })
+        if tag_id:
+            queryset = queryset.filter(tags__id=tag_id)
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['tags'] = Tag.objects.all()
+        context['selected_tag'] = self.request.GET.get('tag')
+        return context
 
 
-def post_detail(request, id):
-    post = get_object_or_404(Post, id=id, is_published=True)
-    return render(request, 'posts/post_detail.html', {'post': post})
+class PostDetailView(DetailView):
+    model = Post
+    template_name = 'posts/post_detail.html'
+    context_object_name = 'post'
+    pk_url_kwarg = 'id'
+
+    def get_queryset(self):
+        return Post.objects.filter(is_published=True)
 
 
-@login_required
-def edit_profile(request):
-    if request.method == 'POST':
-        form = UserUpdateForm(request.POST, instance=request.user)
-        if form.is_valid():
-            form.save()
-            return redirect('post_list')
-    else:
-        form = UserUpdateForm(instance=request.user)
+class EditProfileView(LoginRequiredMixin, UpdateView):
+    model = User
+    form_class = UserUpdateForm
+    template_name = 'posts/edit_profile.html'
+    success_url = reverse_lazy('post_list')
 
-    return render(request, 'posts/edit_profile.html', {'form': form})
+    def get_object(self, queryset=None):
+        return self.request.user
