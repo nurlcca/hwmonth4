@@ -6,6 +6,19 @@
     <title>Posts</title>
 </head>
 <body>
+
+    <div style="margin-bottom: 20px;">
+        {% if user.is_authenticated %}
+            <p>
+                Hello, {{ user.username }} |
+                <a href="{% url 'edit_profile' %}">Edit profile</a> |
+                <a href="/accounts/logout/">Logout</a>
+            </p>
+        {% else %}
+            <a href="/accounts/login/">Login</a>
+        {% endif %}
+    </div>
+
     <h1>Published Posts</h1>
 
     <form method="get">
@@ -13,7 +26,8 @@
         <select name="tag" id="tag" onchange="this.form.submit()">
             <option value="">All tags</option>
             {% for tag in tags %}
-                <option value="{{ tag.id }}" {% if selected_tag == tag.id|stringformat:"s" %}selected{% endif %}>
+                <option value="{{ tag.id }}"
+                    {% if selected_tag == tag.id|stringformat:"s" %}selected{% endif %}>
                     {{ tag.name }}
                 </option>
             {% endfor %}
@@ -48,5 +62,6 @@
     {% empty %}
         <p>No published posts found.</p>
     {% endfor %}
+
 </body>
 </html>
